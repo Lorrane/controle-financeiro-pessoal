@@ -1,34 +1,65 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using ControleFinanceiro.Application.Contas;
+using ControleFinanceiro.Domain.Contas;
 using ControleFinanceiro.Infrastructure;
+using ControleFinanceiro.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+var construtor = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-builder.Services.AddInfrastructure(builder.Configuration);
+construtor.Services.AddControllers()
+    .AddJsonOptions(opcoesJson =>
+        opcoesJson.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
+construtor.Services.AddOpenApi();
+construtor.Services.RegistrarInfraestrutura(construtor.Configuration);
+construtor.Services.AddScoped<ServicoDeContas>();
+construtor.Services.AddScoped<ServicoDeCategorias>();
+construtor.Services.AddSingleton(TimeProvider.System);
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+var origensPermitidas = construtor.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? throw new InvalidOperationException("A configuração Cors:AllowedOrigins é obrigatória.");
 
-builder.Services.AddCors(options =>
+construtor.Services.AddCors(opcoesCors =>
 {
-    options.AddDefaultPolicy(policy => policy
-        .WithOrigins(allowedOrigins)
+    opcoesCors.AddDefaultPolicy(politica => politica
+        .WithOrigins(origensPermitidas)
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
-builder.Services.AddHealthChecks();
+construtor.Services.AddHealthChecks();
 
-var app = builder.Build();
+var aplicacao = construtor.Build();
 
-if (app.Environment.IsDevelopment())
+aplicacao.Use(async (contexto, proximo) =>
 {
-    app.MapOpenApi();
+    try
+    {
+        await proximo();
+    }
+    catch (ExcecaoRegraDominio excecao)
+    {
+        contexto.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await contexto.Response.WriteAsJsonAsync(new { erro = excecao.Message });
+    }
+});
+
+using (var escopo = aplicacao.Services.CreateScope())
+{
+    var contextoBanco = escopo.ServiceProvider.GetRequiredService<ControleFinanceiroDbContext>();
+    contextoBanco.Database.Migrate();
 }
 
-app.UseHttpsRedirection();
-app.UseCors();
-app.UseAuthorization();
-app.MapControllers();
-app.MapHealthChecks("/health");
+if (aplicacao.Environment.IsDevelopment())
+{
+    aplicacao.MapOpenApi();
+}
 
-app.Run();
+aplicacao.UseHttpsRedirection();
+aplicacao.UseCors();
+aplicacao.UseAuthorization();
+aplicacao.MapControllers();
+aplicacao.MapHealthChecks("/health");
+
+aplicacao.Run();

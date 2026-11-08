@@ -1,0 +1,423 @@
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">ORGANIZAÇÃO FINANCEIRA</p>
+    <h1>Cadastro de contas</h1>
+    <p class="subtitle">Registre compromissos únicos, parcelados ou mensais sem perder o histórico.</p>
+  </div>
+  <button class="button button-outline" type="button" (click)="mostrarCategorias = !mostrarCategorias">
+    {{ mostrarCategorias ? 'Voltar para contas' : 'Gerenciar categorias' }}
+  </button>
+</section>
+
+<div class="notice notice-error" role="alert" aria-live="assertive" *ngIf="erro">{{ erro }}</div>
+<div class="notice notice-success" role="status" aria-live="polite" *ngIf="aviso">{{ aviso }}</div>
+
+<section class="category-panel panel" *ngIf="mostrarCategorias" aria-labelledby="categories-title">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">ORGANIZE SEUS COMPROMISSOS</p>
+      <h2 id="categories-title">Categorias</h2>
+    </div>
+  </div>
+
+  <form class="category-form" (ngSubmit)="salvarCategoria()">
+    <label class="field grow">
+      <span>Nome da categoria</span>
+      <input
+        name="categoriaNome"
+        [(ngModel)]="categoriaNome"
+        maxlength="80"
+        required
+        placeholder="Ex.: Moradia"
+      />
+    </label>
+    <label class="field category-color-field">
+      <span>Cor</span>
+      <input name="categoriaCor" [(ngModel)]="categoriaCor" type="color" aria-label="Cor da categoria" />
+    </label>
+    <div class="category-actions">
+      <button class="button button-primary" type="submit">
+        {{ categoriaEditandoId === null ? 'Adicionar categoria' : 'Salvar categoria' }}
+      </button>
+      <button
+        class="button button-quiet"
+        type="button"
+        *ngIf="categoriaEditandoId !== null"
+        (click)="cancelarCategoria()"
+      >Cancelar</button>
+    </div>
+  </form>
+
+  <div class="category-list" *ngIf="categorias.length; else emptyCategories">
+    <article class="category-row" *ngFor="let categoria of categorias">
+      <span
+        class="category-dot"
+        [style.background-color]="categoria.cor || '#55a275'"
+        aria-hidden="true"
+      ></span>
+      <span class="category-name">{{ categoria.nome }}</span>
+      <span class="inactive-tag" *ngIf="!categoria.ativa">Inativa</span>
+      <button
+        class="text-button"
+        type="button"
+        [disabled]="!categoria.ativa"
+        (click)="editarCategoria(categoria)"
+      >Editar</button>
+      <button
+        class="text-button text-danger"
+        type="button"
+        *ngIf="categoria.ativa"
+        (click)="inativarCategoria(categoria)"
+      >Inativar</button>
+    </article>
+  </div>
+  <ng-template #emptyCategories>
+    <p class="empty-inline">Ainda não há categorias. Crie uma para começar a cadastrar contas.</p>
+  </ng-template>
+</section>
+
+<div class="content-grid" *ngIf="!mostrarCategorias">
+  <section class="panel form-panel" id="form-conta" aria-labelledby="form-title">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">{{ editandoId === null ? 'NOVO COMPROMISSO' : 'ATUALIZE OS DADOS' }}</p>
+        <h2 id="form-title">{{ editandoId === null ? 'Adicionar conta' : 'Editar conta' }}</h2>
+      </div>
+      <span class="form-icon" aria-hidden="true">{{ editandoId === null ? '+' : '↗' }}</span>
+    </div>
+
+    <form class="account-form" (ngSubmit)="salvarConta()">
+      <label class="field">
+        <span>Nome da conta</span>
+        <input
+          name="nome"
+          [(ngModel)]="formulario.nome"
+          maxlength="120"
+          required
+          placeholder="Ex.: Conta de energia"
+        />
+      </label>
+
+      <div class="form-row">
+        <label class="field">
+          <span>Valor previsto</span>
+          <span class="input-prefix">
+            <span>R$</span>
+            <input
+              name="valorPrevisto"
+              [(ngModel)]="formulario.valorPrevisto"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              placeholder="0,00"
+            />
+          </span>
+        </label>
+        <label class="field">
+          <span>Categoria</span>
+          <select name="categoriaId" [(ngModel)]="formulario.categoriaId" required>
+            <option [ngValue]="null" disabled>Selecione</option>
+            <option *ngFor="let categoria of categoriasAtivas" [ngValue]="categoria.id">{{ categoria.nome }}</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field-label">
+          Tipo de conta
+          <span class="help-group" [class.is-open]="ajudasAbertas['tipo']">
+            <button
+              class="help-button"
+              type="button"
+              aria-label="Ajuda sobre tipo de conta"
+              [attr.aria-expanded]="!!ajudasAbertas['tipo']"
+              aria-controls="ajuda-tipo"
+              (click)="alternarAjuda('tipo')"
+            >?</button>
+            <span class="help-tooltip" id="ajuda-tipo" role="tooltip">
+              Única gera um compromisso; parcelada tem quantidade definida; fixa mensal se repete.
+            </span>
+          </span>
+        </span>
+        <select name="tipo" [(ngModel)]="formulario.tipo" [disabled]="editandoId !== null">
+          <option *ngFor="let tipo of tipos" [ngValue]="tipo.valor">{{ tipo.rotulo }}</option>
+        </select>
+        <span class="help-note" *ngIf="editandoId !== null">
+          O tipo não pode ser alterado após a criação, para preservar a numeração dos compromissos.
+        </span>
+      </label>
+
+      <label class="field">
+        <span class="field-label">
+          Vencimento {{ exigeVencimento ? '' : '(opcional)' }}
+          <span class="help-group" [class.is-open]="ajudasAbertas['vencimento']">
+            <button
+              class="help-button"
+              type="button"
+              aria-label="Ajuda sobre vencimento"
+              [attr.aria-expanded]="!!ajudasAbertas['vencimento']"
+              aria-controls="ajuda-vencimento"
+              (click)="alternarAjuda('vencimento')"
+            >?</button>
+            <span class="help-tooltip" id="ajuda-vencimento" role="tooltip">
+              Vencimentos nos dias 29, 30 ou 31 usam o último dia do mês quando necessário.
+              Sem data, uma conta única não entra em planejamentos futuros.
+            </span>
+          </span>
+        </span>
+        <input
+          name="vencimentoInicial"
+          [(ngModel)]="formulario.vencimentoInicial"
+          type="date"
+          [required]="exigeVencimento"
+        />
+      </label>
+
+      <div class="form-row installment-fields" *ngIf="ehParcelada">
+        <label class="field">
+          <span class="field-label">
+            Total de parcelas
+            <span class="help-group" [class.is-open]="ajudasAbertas['totalParcelas']">
+              <button
+                class="help-button"
+                type="button"
+                aria-label="Ajuda sobre total de parcelas"
+                [attr.aria-expanded]="!!ajudasAbertas['totalParcelas']"
+                aria-controls="ajuda-total-parcelas"
+                (click)="alternarAjuda('totalParcelas')"
+              >?</button>
+              <span class="help-tooltip" id="ajuda-total-parcelas" role="tooltip">
+                Informe o total contratado. O sistema cria compromissos a partir da parcela atual.
+              </span>
+            </span>
+          </span>
+          <input
+            name="totalParcelas"
+            [(ngModel)]="formulario.totalParcelas"
+            type="number"
+            min="1"
+            step="1"
+            required
+            [disabled]="editandoId !== null"
+            placeholder="Ex.: 12"
+          />
+        </label>
+        <label class="field">
+          <span class="field-label">
+            Parcela atual
+            <span class="help-group" [class.is-open]="ajudasAbertas['parcelaAtual']">
+              <button
+                class="help-button"
+                type="button"
+                aria-label="Ajuda sobre parcela atual"
+                [attr.aria-expanded]="!!ajudasAbertas['parcelaAtual']"
+                aria-controls="ajuda-parcela-atual"
+                (click)="alternarAjuda('parcelaAtual')"
+              >?</button>
+              <span class="help-tooltip" id="ajuda-parcela-atual" role="tooltip">
+                Parcelas anteriores não são criadas automaticamente; informe a parcela vigente.
+              </span>
+            </span>
+          </span>
+          <input
+            name="parcelaAtual"
+            [(ngModel)]="formulario.parcelaAtual"
+            type="number"
+            min="1"
+            [max]="formulario.totalParcelas"
+            step="1"
+            required
+            [disabled]="editandoId !== null"
+          />
+        </label>
+        <span class="help-note installment-note" *ngIf="editandoId !== null">
+          A quantidade e a parcela atual ficam fixas após o cadastro.
+        </span>
+      </div>
+
+      <label class="field">
+        <span>Descrição <span class="optional">(opcional)</span></span>
+        <textarea
+          name="descricao"
+          [(ngModel)]="formulario.descricao"
+          maxlength="500"
+          rows="3"
+          placeholder="Algum detalhe que ajude você a identificar esta conta"
+        ></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button class="button button-primary button-wide" type="submit" [disabled]="salvando || !categorias.length">
+          {{ salvando ? 'Salvando…' : editandoId === null ? 'Salvar conta' : 'Salvar alterações' }}
+        </button>
+        <button class="button button-quiet" type="button" *ngIf="editandoId !== null" (click)="cancelarEdicao()">
+          Cancelar
+        </button>
+      </div>
+      <p class="empty-inline" *ngIf="!categorias.length">
+        Cadastre uma categoria antes de criar a primeira conta.
+      </p>
+    </form>
+  </section>
+
+  <section class="list-section" aria-labelledby="accounts-title">
+    <div class="list-heading">
+      <div>
+        <p class="eyebrow">SEUS COMPROMISSOS</p>
+        <h2 id="accounts-title">Contas <span class="count">{{ contasFiltradas.length }}</span></h2>
+      </div>
+      <label class="inactive-filter">
+        <input type="checkbox" [(ngModel)]="incluirInativas" name="incluirInativas" />
+        <span>Inativas</span>
+      </label>
+    </div>
+
+    <div class="filters" aria-label="Filtros de contas">
+      <label class="filter-field">
+        <span>Tipo</span>
+        <select [(ngModel)]="filtroTipo" name="filtroTipo">
+          <option value="">Todos</option>
+          <option *ngFor="let tipo of tipos" [value]="tipo.valor">{{ tipo.rotulo }}</option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span>Categoria</span>
+        <select [(ngModel)]="filtroCategoria" name="filtroCategoria">
+          <option value="">Todas</option>
+          <option *ngFor="let categoria of categorias" [value]="categoria.id">
+            {{ categoria.nome }}{{ categoria.ativa ? '' : ' (inativa)' }}
+          </option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span>Vencimento</span>
+        <select [(ngModel)]="filtroSituacao" name="filtroSituacao">
+          <option value="">Todas as situações</option>
+          <option *ngFor="let situacao of situacoes" [value]="situacao.valor">{{ situacao.rotulo }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="loading-state" *ngIf="carregando">Carregando contas…</div>
+    <div class="account-list" *ngIf="!carregando && contasFiltradas.length; else emptyAccounts">
+      <article
+        class="account-card"
+        *ngFor="let conta of contasFiltradas"
+        [ngStyle]="estilosDoCartao(conta)"
+      >
+        <div class="account-main">
+          <span class="account-symbol" aria-hidden="true">{{ conta.tipo === 'fixaMensal' ? '↻' : conta.tipo === 'parcelada' ? '▤' : '◇' }}</span>
+          <div class="account-title">
+            <div class="account-name-line">
+              <h3>{{ conta.nome }}</h3>
+              <span class="inactive-tag" *ngIf="!conta.ativa">Inativa</span>
+            </div>
+            <div class="account-meta">
+              <span>{{ conta.categoriaNome }}</span>
+              <span>{{ rotuloTipo(conta.tipo) }}</span>
+              <span *ngIf="conta.tipo === 'parcelada'">
+                Parcela {{ conta.parcelaAtual }}/{{ conta.totalParcelas }}
+              </span>
+            </div>
+          </div>
+          <strong class="account-amount">{{ moeda.format(conta.valorPrevisto) }}</strong>
+        </div>
+
+        <p class="account-description" *ngIf="conta.descricao" [attr.title]="conta.descricao">
+          {{ conta.descricao }}
+        </p>
+
+        <div class="account-actions">
+          <div class="account-action-leading">
+          <button
+            class="action-button commitment-toggle"
+            type="button"
+            *ngIf="conta.compromissos.length > 2"
+            [attr.aria-expanded]="cartoesExpandidos.has(conta.id)"
+            [attr.aria-label]="cartoesExpandidos.has(conta.id)
+              ? 'Recolher compromissos de ' + conta.nome
+              : 'Ver todos os ' + conta.compromissos.length + ' compromissos de ' + conta.nome"
+            (click)="alternarCompromissos(conta)"
+          >
+            <svg class="action-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                *ngIf="cartoesExpandidos.has(conta.id)"
+                d="m3.5 10 4.5-4 4.5 4"
+              />
+              <path *ngIf="!cartoesExpandidos.has(conta.id)" d="m3.5 6 4.5 4 4.5-4" />
+            </svg>
+            {{ cartoesExpandidos.has(conta.id)
+              ? 'Recolher (' + conta.compromissos.length + ')'
+              : 'Ver todos os ' + conta.compromissos.length + ' compromissos' }}
+          </button>
+          </div>
+          <span class="account-action-buttons" *ngIf="conta.ativa">
+            <button
+              class="action-button action-edit"
+              type="button"
+              [attr.aria-label]="'Editar ' + conta.nome"
+              (click)="editarConta(conta)"
+            >
+              <svg class="action-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="m10.9 2.1 3 3M2.5 13.5l2.8-.6 8.3-8.3a1.4 1.4 0 0 0-2-2l-8.3 8.3-.8 2.6Z" />
+              </svg>
+              Editar
+            </button>
+            <button
+              class="action-button action-inactivate"
+              type="button"
+              [attr.aria-label]="'Inativar ' + conta.nome"
+              (click)="inativarConta(conta)"
+            >
+              <svg class="action-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M2 5h12v9H2zM1.5 2h13v3h-13zM6 8h4" />
+              </svg>
+              Inativar
+            </button>
+          </span>
+        </div>
+
+        <div class="commitment-list" *ngIf="compromissosExibidos(conta).length">
+          <div
+            class="commitment-row"
+            *ngFor="let compromisso of compromissosExibidos(conta)"
+            [class.commitment-cancelled]="compromisso.cancelado"
+          >
+            <span class="commitment-sequence">
+              {{ conta.tipo === 'parcelada' ? 'Parcela' : conta.tipo === 'fixaMensal' ? 'Ocorrência' : 'Compromisso' }}
+              {{ conta.tipo === 'unica' ? '' : compromisso.sequencia }}
+            </span>
+            <span class="commitment-date">{{ formatarData(compromisso.vencimento) }}</span>
+            <span class="commitment-badges">
+              <span
+                class="badge badge-due"
+                [class.badge-late]="compromisso.situacaoVencimento === 'atrasado' && !compromisso.cancelado"
+                [class.badge-current]="compromisso.situacaoVencimento === 'emDia' && !compromisso.cancelado"
+                [class.badge-undated]="compromisso.situacaoVencimento === 'semVencimento' && !compromisso.cancelado"
+                [class.badge-cancelled]="compromisso.cancelado"
+              >
+                {{ compromisso.cancelado ? 'Cancelado' : rotuloSituacao(compromisso.situacaoVencimento) }}
+              </span>
+              <span
+                class="badge badge-payment"
+                [class.badge-pending]="compromisso.situacaoPagamento === 'pendente'"
+                [class.badge-paid]="compromisso.situacaoPagamento === 'pago'"
+              >
+                {{ compromisso.situacaoPagamento === 'pendente' ? 'Pendente' : 'Pago' }}
+              </span>
+            </span>
+          </div>
+        </div>
+
+      </article>
+    </div>
+    <ng-template #emptyAccounts>
+      <div class="empty-state" *ngIf="!carregando">
+        <span class="empty-illustration" aria-hidden="true">＋</span>
+        <h3>Nenhuma conta por aqui</h3>
+        <p>Ajuste os filtros ou cadastre uma conta para começar seu planejamento.</p>
+      </div>
+    </ng-template>
+  </section>
+</div>

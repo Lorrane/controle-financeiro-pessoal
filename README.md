@@ -1,46 +1,74 @@
-# Meu financeiro
+# Meu Financeiro
 
-Sistema web local para controle e planejamento financeiro pessoal. O projeto
-está na etapa de estruturação: regras de negócio e cálculos só serão adicionados
-depois de serem definidos e validados.
+Aplicação web para organizar categorias, contas e compromissos financeiros
+pessoais. O projeto está **em desenvolvimento** e esta primeira etapa implementa
+somente o cadastro e a organização dos compromissos previstos.
+
+> Pagamentos, movimentações de caixa, metas, previsões e relatórios são
+> funcionalidades futuras. Não estão implementadas nesta versão.
 
 ## Tecnologias
 
-- **API:** C# e ASP.NET Core no .NET 10
-- **Interface:** Angular com TypeScript e SCSS
-- **Persistência:** SQLite com Entity Framework Core
-- **Testes:** xUnit para o domínio e Vitest para a interface
+- **Backend:** C#, ASP.NET Core e .NET 10.
+- **Frontend:** Angular, TypeScript e SCSS.
+- **Persistência:** SQLite e Entity Framework Core 10.
+- **Testes:** xUnit e Vitest.
 
-## Estrutura
+## Arquitetura e estrutura
+
+A solução separa domínio, casos de uso, persistência e API. O domínio não
+depende das outras camadas; a infraestrutura implementa persistência, e a API
+expõe os casos de uso por HTTP.
 
 ```text
 src/
-  ControleFinanceiro.Api/            API HTTP e configuração
-  ControleFinanceiro.Application/    Casos de uso
-  ControleFinanceiro.Domain/         Regras e modelos do domínio
-  ControleFinanceiro.Infrastructure/ Persistência SQLite
+  ControleFinanceiro.Api/            API HTTP e inicialização
+  ControleFinanceiro.Application/    Casos de uso e contratos
+  ControleFinanceiro.Domain/         Entidades e regras de negócio
+  ControleFinanceiro.Infrastructure/ Persistência SQLite e migrations
 tests/
-  ControleFinanceiro.Domain.Tests/   Testes do domínio
-frontend/                            Aplicação Angular
+  ControleFinanceiro.Domain.Tests/   Testes de domínio, aplicação e persistência
+frontend/
+  src/app/                           Aplicação Angular e tela de contas
+docs/                                Arquitetura, regras e guia de execução
 ```
 
-O domínio não depende das outras camadas. A aplicação depende do domínio; a
-infraestrutura implementa persistência; a API conecta as camadas.
+Documentação detalhada:
 
-## Requisitos para desenvolvimento
+- [Arquitetura](docs/arquitetura.md)
+- [Regras de negócio](docs/regras-de-negocio.md)
+- [Guia de execução](docs/guia-de-execucao.md)
 
-- .NET 10 SDK
-- Node.js e npm
+## Funcionalidades implementadas
 
-## Executar localmente no Windows
+- Cadastro, edição e inativação de categorias com cor opcional.
+- Cadastro, edição, listagem e inativação de contas únicas, parceladas e fixas
+  mensais.
+- Filtros de contas por tipo, categoria, situação de vencimento e estado ativo.
+- Compromissos individualizados, numerados e vinculados à conta original.
+- Geração inicial de parcelas a partir da parcela atual e geração recorrente
+  limitada a um horizonte móvel de 12 meses.
+- Preservação de histórico nas alterações; situação de pagamento independente
+  da classificação de vencimento.
+- Interface responsiva com ajuda contextual e temas derivados das categorias.
 
-Na raiz do projeto, em um terminal:
+Nenhum compromisso é marcado como pago automaticamente. Não há nesta etapa
+fluxo de pagamentos ou de movimentação financeira.
+
+## Pré-requisitos
+
+- .NET 10 SDK.
+- Node.js e npm.
+
+## Executar localmente
+
+Na raiz do projeto, inicie a API:
 
 ```powershell
 dotnet run --project src\ControleFinanceiro.Api\ControleFinanceiro.Api.csproj --launch-profile http
 ```
 
-Em outro terminal:
+Em outro terminal, instale dependências e inicie a interface:
 
 ```powershell
 Set-Location frontend
@@ -48,37 +76,53 @@ npm install
 npm start
 ```
 
-A interface fica em `http://localhost:4200`, e a verificação básica da API em
-`http://localhost:5184/health`. A conexão SQLite está configurada para criar o
-arquivo `controle-financeiro.db` quando a persistência for usada; o banco não é
-criado até que existam entidades e migrations.
+A interface estará em `http://localhost:4200`; a API, em
+`http://localhost:5184`. O proxy de desenvolvimento encaminha `/api` à API.
+`http://localhost:5184/health` verifica sua disponibilidade.
 
-## Acesso pela rede Wi-Fi
+## SQLite e migrations
 
-Os perfis de rede local são opt-in. Para disponibilizar a interface no Wi-Fi,
-execute `npm run start:lan`; para a API, use
-`dotnet run --project src\ControleFinanceiro.Api\ControleFinanceiro.Api.csproj --launch-profile lan`.
-Configure o endereço da interface na lista `Cors:AllowedOrigins` da API com o
-IP local do computador e a porta `4200`. O firewall do Windows pode solicitar
-permissão para a rede privada. Use somente em uma rede confiável: esta etapa
-ainda não inclui autenticação e não deve ser exposta à internet.
+A cadeia de conexão de desenvolvimento fica em
+`src/ControleFinanceiro.Api/appsettings.json`. Por padrão, a API cria
+`controle-financeiro.db` no diretório de trabalho e aplica migrations pendentes
+ao iniciar. Arquivos SQLite e seus auxiliares locais são ignorados pelo Git.
 
-## Testes
+Para criar uma migration com EF Core 10:
+
+```powershell
+dotnet tool install --global dotnet-ef --version 10.0.11
+dotnet ef migrations add NomeDaMigracao --project src\ControleFinanceiro.Infrastructure\ControleFinanceiro.Infrastructure.csproj --startup-project src\ControleFinanceiro.Api\ControleFinanceiro.Api.csproj --output-dir Persistence\Migrations
+```
+
+## Testes e builds
+
+Na raiz da solução:
 
 ```powershell
 dotnet test ControleFinanceiro.slnx
+dotnet build ControleFinanceiro.slnx
 ```
+
+No diretório `frontend`:
 
 ```powershell
-Set-Location frontend
 npm test -- --watch=false
+npm run build
 ```
 
-Os testes de cálculos financeiros serão incluídos junto com as regras
-correspondentes; não há regras financeiras presumidas nesta estrutura inicial.
+## Acesso na rede local
 
-## GitHub
+Para testar em um celular conectado à mesma rede Wi-Fi, execute a interface
+com `npm run start:lan` e a API com o perfil `lan`. Acesse no celular
+`http://<IP-do-computador>:4200`. O [guia de execução](docs/guia-de-execucao.md)
+detalha os comandos.
 
-O repositório está planejado como **público**: qualquer pessoa poderá ler o
-código; apenas a conta proprietária terá permissão de escrita. Não publique
-dados financeiros reais, arquivos SQLite, credenciais ou segredos.
+Esta versão não possui autenticação. Use apenas em uma rede confiável e não a
+exponha à internet.
+
+## Segurança e portfólio
+
+O repositório pode ser público para apresentação como portfólio. Não publique
+dados financeiros pessoais, bancos SQLite, arquivos de ambiente com segredos,
+tokens, senhas ou chaves. A configuração versionada contém somente valores de
+desenvolvimento sem credenciais.
