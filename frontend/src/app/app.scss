@@ -1,0 +1,313 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.topbar {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #17251f;
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 11px;
+  background: #d7f0e2;
+  color: #176844;
+  font-size: 16px;
+}
+
+.environment-badge {
+  padding: 8px 12px;
+  border: 1px solid #e4e9e5;
+  border-radius: 999px;
+  color: #64736a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.welcome-card {
+  position: relative;
+  display: flex;
+  min-height: 340px;
+  align-items: center;
+  overflow: hidden;
+  padding: 52px 60px;
+  border-radius: 24px;
+  background: #123d2e;
+  color: #fff;
+}
+
+.welcome-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 610px;
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: #559c78;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.welcome-card .eyebrow {
+  color: #a5dabb;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 580px;
+  margin-bottom: 16px;
+  font-size: clamp(32px, 4vw, 46px);
+  font-weight: 650;
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+}
+
+.intro {
+  max-width: 490px;
+  margin-bottom: 24px;
+  color: #d1e2d9;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #e0f3e7;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7cdfa5;
+  box-shadow: 0 0 0 4px rgb(124 223 165 / 14%);
+}
+
+.welcome-art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36%;
+  height: 100%;
+}
+
+.art-circle {
+  position: absolute;
+  top: 50%;
+  right: 48px;
+  width: 220px;
+  height: 220px;
+  transform: translateY(-50%);
+  border: 1px solid rgb(255 255 255 / 13%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 28px rgb(255 255 255 / 4%), 0 0 0 56px rgb(255 255 255 / 3%);
+}
+
+.art-card {
+  position: absolute;
+  top: 50%;
+  right: 90px;
+  display: flex;
+  width: 142px;
+  height: 126px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+  padding: 20px;
+  transform: translateY(-50%) rotate(5deg);
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 16px;
+  background: #f5faf6;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 15%);
+}
+
+.art-line {
+  display: block;
+  width: 100%;
+  height: 7px;
+  border-radius: 8px;
+  background: #dce8df;
+}
+
+.art-line.short {
+  width: 48%;
+  background: #b6d9c2;
+}
+
+.art-bar {
+  display: block;
+  width: 68%;
+  height: 26px;
+  margin-top: 6px;
+  border-radius: 7px;
+  background: #2a8b5a;
+}
+
+.next-step {
+  padding: 54px 0 42px;
+}
+
+.section-heading {
+  max-width: 660px;
+  margin-bottom: 25px;
+}
+
+.section-heading h2 {
+  margin-bottom: 10px;
+  color: #1b2b23;
+  font-size: clamp(23px, 3vw, 30px);
+  letter-spacing: -0.045em;
+}
+
+.section-heading > p:last-child {
+  margin-bottom: 0;
+  color: #728078;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.foundation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.foundation-card {
+  min-height: 142px;
+  padding: 22px;
+  border: 1px solid #e8ede9;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.card-number {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: #33825a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.foundation-card h3 {
+  margin-bottom: 7px;
+  color: #26372e;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.foundation-card p {
+  margin-bottom: 0;
+  color: #758179;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0 30px;
+  border-top: 1px solid #e8ede9;
+  color: #87918a;
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .app-shell {
+    width: min(100% - 32px, 540px);
+  }
+
+  .topbar {
+    height: 72px;
+  }
+
+  .welcome-card {
+    min-height: 360px;
+    padding: 34px 26px;
+  }
+
+  .welcome-copy {
+    align-self: flex-start;
+  }
+
+  .welcome-art {
+    top: auto;
+    bottom: -34px;
+    width: 100%;
+    height: 145px;
+    opacity: 0.75;
+  }
+
+  .art-circle {
+    top: 50%;
+    right: 40px;
+    width: 155px;
+    height: 155px;
+  }
+
+  .art-card {
+    top: 50%;
+    right: 78px;
+    width: 118px;
+    height: 94px;
+    gap: 8px;
+    padding: 15px;
+  }
+
+  .art-bar {
+    height: 18px;
+  }
+
+  .foundation-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .foundation-card {
+    min-height: auto;
+    padding: 17px;
+  }
+
+  .card-number {
+    margin-bottom: 9px;
+  }
+
+  footer {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+}
